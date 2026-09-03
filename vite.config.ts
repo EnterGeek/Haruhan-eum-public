@@ -10,6 +10,7 @@ export default defineConfig({
         app: resolve(__dirname, 'index.html'),
         work02Lab: resolve(__dirname, 'work02-lab.html'),
         work02ColorDimensionsLab: resolve(__dirname, 'work02-color-dimensions-lab.html'),
+        work03Lab: resolve(__dirname, 'work03-lab.html'),
       },
     },
   },

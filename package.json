@@ -10,7 +10,8 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm test && npm run build"
+    "check": "npm test && npm run build",
+    "report:work03": "vite-node src/work03/evaluation/reportCli.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.4.1",
@@ -25,6 +26,7 @@
     "@types/react-dom": "^19.1.2",
     "jsdom": "^26.1.0",
     "typescript": "~5.8.3",
+    "vite-node": "^3.2.4",
     "vitest": "^3.1.4"
   }
 }

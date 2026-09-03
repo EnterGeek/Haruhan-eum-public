@@ -11,11 +11,12 @@
 
 - **Work 01:** 결정적 OKLCH 색상 덱, 좌우 선택, 되돌리기, 세션 JSON 계약
 - **Work 02:** 입력 adapter, Hue 해석 A/B/C, melody generator baseline, Web Audio schedule/player
-- **개발용 Lab:** `/work02-lab.html`, `/work02-color-dimensions-lab.html`
+- **Work 03 R&D:** 결정적 phrase/motif/rhythm/cadence grammar v1, 구조 metric, Work 02 비교 report
+- **개발용 Lab:** `/work02-lab.html`, `/work02-color-dimensions-lab.html`, `/work03-lab.html`
 - **제품 기본 매핑:** 미확정
 - **개인화·잠재 상태 추정·production mapping:** 이 공개 저장소의 범위 밖
 
-모든 Work 02 음악 규칙은 현재 **실험 가정**입니다. 색채 심리 검사나 의료·상담 도구로 사용해서는 안 됩니다.
+모든 Work 02·03 음악 규칙은 현재 **실험 가정**입니다. 색채 심리 검사나 의료·상담 도구로 사용해서는 안 됩니다. Work 03은 production UI 또는 Work 02 기본 동작을 대체하지 않습니다.
 
 ## 실행
 
@@ -29,6 +30,7 @@ npm run dev
 ```bash
 npm test
 npm run build
+npm run report:work03
 ```
 
 ## 진입점
@@ -38,8 +40,11 @@ npm run build
 | `/` | Work 01 모바일 색 선택 프로토타입 |
 | `/work02-lab.html` | Absolute / Relative / Hybrid Hue 비교 |
 | `/work02-color-dimensions-lab.html` | Hue-only와 Hue + Lightness + Chroma 임시 비교 |
+| `/work03-lab.html` | 공개 fixture 기반 Work 02 baseline과 Music Grammar v1 구조 비교 |
 
-Lab은 제품 화면이 아니라 개발·청취 검증 도구입니다. Lab 결과가 심리적 의미나 제품 기본 알고리즘의 확정을 뜻하지 않습니다.
+Lab은 제품 화면이 아니라 개발·비교 도구입니다. Work 02 lab에는 브라우저 청취가 있지만, Work 03 lab은 정직한 Work 03 schedule 검증까지만 제공하고 playback은 연결하지 않습니다. Lab 결과가 심리적 의미나 제품 기본 알고리즘의 확정을 뜻하지 않습니다.
+
+Work 03 전체 비교 harness는 16개 공개 fixture × 3개 해석 방식 × 6개 profile을 평가합니다. 현재 구조 가설 결과는 H1–H6 통과, H7 contour/register 가설 실패로 `MIXED`이며 production 교체 권고는 `NO`입니다. 자세한 계약과 결과는 [`docs/work03/STRUCTURAL_EVALUATION_V1.md`](docs/work03/STRUCTURAL_EVALUATION_V1.md)와 [`docs/work03/STRUCTURAL_COMPARISON_REPORT_V1.md`](docs/work03/STRUCTURAL_COMPARISON_REPORT_V1.md)를 참조하세요.
 
 ## 데이터와 개인정보
 

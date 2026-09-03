@@ -4,7 +4,8 @@
 - Grammar under test: `work03-music-grammar-v1`
 - Baseline: `work02-melody-generator-v0` at repository baseline
   `1ed513a7733c1229d3bdca00f2058509597aa223`
-- Status: pre-registered before the Grammar v1 generator implementation
+- Status: initial criteria recorded before the Grammar v1 generator;
+  executable clarifications are logged below before formal report generation
 
 This protocol tests declared musical structure. It does not measure listener
 preference, emotional correctness, therapeutic effect, or universal musical
@@ -181,9 +182,9 @@ requires identical expanded Work 03 input.
   same hard validators.
 - **H7 — Contour/register safety:** raw contour agreement is no more than
   one missed eligible transition below its paired Work 02 baseline, expressed
-  as `allowedDrop = 1 / max(1, eligibleContourComparisons)`. Profile
-  register-utilization bands and edge-run caps pass, and tonal-center drift is
-  zero.
+  as `allowedDrop = 1 / max(1, eligibleContourComparisons)`. Register
+  utilization is finite and remains in its contract range `[0, 1]`, the edge
+  run is at most two, and tonal-center drift is zero.
 
 Greater pitch diversity or entropy is not inherently better. Those values are
 reported but are not improvement hypotheses.
@@ -204,3 +205,18 @@ Even `SUPPORTED` means only that these pre-registered deterministic structural
 hypotheses hold on this public synthetic matrix. It does not establish perceived
 coherence, pleasantness, emotional correctness, or production readiness.
 `PRODUCTION_REPLACEMENT_RECOMMENDED` remains `NO` for Work 03.
+
+## Milestone 2 clarification log
+
+Before the formal comparison report was generated, two ambiguous H7 phrases
+from the milestone 1 draft were made executable:
+
+- Fixed `1/11` became one missed *eligible* transition, because equal adjacent
+  contour targets are excluded by the metric's frozen definition.
+- “Profile register-utilization bands” had no numeric profile bands anywhere in
+  the contract. It became the existing metric's intrinsic `[0, 1]` range plus
+  the already frozen maximum edge run of two. No profile-specific thresholds
+  were invented after implementation.
+
+The report retains these clarifications and reports H7 as failed when its
+contour condition fails; they are not used to turn a failing case into a pass.
