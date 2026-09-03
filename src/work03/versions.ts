@@ -16,3 +16,5 @@ export const WORK03_DETERMINISTIC_CHOICE_VERSION =
   'work03-choice-fnv1a32-v1' as const
 export const WORK03_STRUCTURAL_EVALUATION_VERSION =
   'work03-structural-evaluation-v1' as const
+export const WORK03_STRUCTURAL_METRICS_VERSION =
+  'work03-structural-metrics-v1' as const

@@ -30,6 +30,9 @@ TEMPORARY EXPERIMENT ASSUMPTION
 - A seed motif contains 2–5 events.
 - Durations remain in the finite vocabulary `0.5`, `1`, `1.5`, and `2` beats.
 - Output contains at most 20 events.
+- A caller-provided event cap must still contain four full occurrences of the
+  selected profile's 2–5-event motif; irreconcilable combinations are rejected
+  instead of silently weakening the profile.
 - The default research register is MIDI 55–79 and callers may only narrow it
   while retaining at least one octave.
 - The default maximum melodic leap is seven semitones and callers may only

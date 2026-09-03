@@ -41,6 +41,13 @@ const allowedOverrideKeys = new Set<keyof GrammarConstraintOverrides>([
   'restsAllowed',
 ])
 
+const allowedRequestKeys = new Set([
+  'interpretation',
+  'seed',
+  'profile',
+  'constraints',
+])
+
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize)
   if (typeof value !== 'object' || value === null) return value
@@ -107,6 +114,7 @@ const validateStrictInterpretation = (
 const resolveConstraints = (
   overridesInput: unknown,
   profileMaximumSyncopatedEvents: number,
+  profileMotifEventCount: number,
 ): Readonly<ResolvedGrammarConstraints> => {
   const overrides = overridesInput === undefined
     ? {}
@@ -165,6 +173,11 @@ const resolveConstraints = (
   if (maximumEvents < 8 || maximumEvents > 20) {
     fail('constraints.maximumEvents must be in [8, 20].')
   }
+  if (maximumEvents < profileMotifEventCount * 4) {
+    fail(
+      'constraints.maximumEvents cannot contain four occurrences of the selected profile motif.',
+    )
+  }
 
   const rawRestsAllowed = overrides.restsAllowed === undefined
     ? true
@@ -198,6 +211,11 @@ export function validateGrammarV1Request(
   input: unknown,
 ): ValidatedGrammarV1Request {
   const request = object(input, 'request')
+  Object.keys(request).forEach((key) => {
+    if (!allowedRequestKeys.has(key)) {
+      fail(`request.${key} is unsupported.`)
+    }
+  })
   const rawSeed = request.seed
   if (typeof rawSeed !== 'string' || rawSeed.length === 0) {
     fail('seed must be a non-empty string.')
@@ -228,6 +246,7 @@ export function validateGrammarV1Request(
     constraints: resolveConstraints(
       request.constraints,
       profile.limits.maximumSyncopatedEvents,
+      profile.limits.motifEventCount,
     ),
   }
 }

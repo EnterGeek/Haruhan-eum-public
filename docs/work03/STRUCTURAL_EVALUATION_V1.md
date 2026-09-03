@@ -180,8 +180,10 @@ requires identical expanded Work 03 input.
   `eventDensity(PULSING) > eventDensity(CALM_SPARSE)`. All profiles pass the
   same hard validators.
 - **H7 — Contour/register safety:** raw contour agreement is no more than
-  `1/11` below its paired Work 02 baseline. Profile register-utilization bands
-  and edge-run caps pass, and tonal-center drift is zero.
+  one missed eligible transition below its paired Work 02 baseline, expressed
+  as `allowedDrop = 1 / max(1, eligibleContourComparisons)`. Profile
+  register-utilization bands and edge-run caps pass, and tonal-center drift is
+  zero.
 
 Greater pitch diversity or entropy is not inherently better. Those values are
 reported but are not improvement hypotheses.

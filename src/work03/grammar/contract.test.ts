@@ -13,6 +13,7 @@ import {
   WORK03_MELODY_OUTPUT_CONTRACT_VERSION,
   WORK03_MUSIC_GRAMMAR_VERSION,
   WORK03_STRUCTURAL_EVALUATION_VERSION,
+  WORK03_STRUCTURAL_METRICS_VERSION,
 } from '../versions'
 import { GRAMMAR_PROFILES, getGrammarProfile } from './profiles'
 import { TONAL_MODE_DEFINITIONS } from './tonalModes'
@@ -66,6 +67,8 @@ describe('Work 03 versioned grammar contract', () => {
     expect(WORK03_DETERMINISTIC_CHOICE_VERSION).toBe('work03-choice-fnv1a32-v1')
     expect(WORK03_STRUCTURAL_EVALUATION_VERSION)
       .toBe('work03-structural-evaluation-v1')
+    expect(WORK03_STRUCTURAL_METRICS_VERSION)
+      .toBe('work03-structural-metrics-v1')
     expect(FLOW_INTERPRETATION_CONTRACT_VERSION)
       .toBe('work02-flow-interpretation-v2')
   })
@@ -88,6 +91,131 @@ describe('Work 03 versioned grammar contract', () => {
       expect(Object.isFrozen(definition.weights)).toBe(true)
       expect(Object.isFrozen(definition.limits)).toBe(true)
       expect(Object.isFrozen(definition.limits.allowedModes)).toBe(true)
+    })
+  })
+
+  it('locks the complete profile policy instead of asserting against itself', () => {
+    expect(GRAMMAR_PROFILES).toEqual({
+      CALM_SPARSE: {
+        id: 'CALM_SPARSE',
+        weights: {
+          contour: 0.35,
+          repetition: 0.8,
+          rhythmicVariation: 0.2,
+          inversion: 0,
+          rest: 0.8,
+          closure: 0.65,
+        },
+        limits: {
+          density: 'sparse',
+          motifEventCount: 2,
+          restRatioTarget: 0.25,
+          maximumSyncopatedEvents: 1,
+          closureStrength: 'moderate',
+          allowedModes: ['major-pentatonic', 'minor-pentatonic'],
+          tempoBpm: 72,
+        },
+      },
+      BALANCED_LYRICAL: {
+        id: 'BALANCED_LYRICAL',
+        weights: {
+          contour: 0.65,
+          repetition: 0.65,
+          rhythmicVariation: 0.55,
+          inversion: 0.15,
+          rest: 0.35,
+          closure: 0.7,
+        },
+        limits: {
+          density: 'balanced',
+          motifEventCount: 3,
+          restRatioTarget: 0.1,
+          maximumSyncopatedEvents: 2,
+          closureStrength: 'moderate',
+          allowedModes: ['major-pentatonic', 'dorian'],
+          tempoBpm: 80,
+        },
+      },
+      PULSING: {
+        id: 'PULSING',
+        weights: {
+          contour: 0.5,
+          repetition: 0.8,
+          rhythmicVariation: 0.7,
+          inversion: 0.1,
+          rest: 0.2,
+          closure: 0.55,
+        },
+        limits: {
+          density: 'dense',
+          motifEventCount: 5,
+          restRatioTarget: 0.05,
+          maximumSyncopatedEvents: 4,
+          closureStrength: 'moderate',
+          allowedModes: ['mixolydian', 'minor-pentatonic'],
+          tempoBpm: 88,
+        },
+      },
+      RESTLESS_CONTOUR: {
+        id: 'RESTLESS_CONTOUR',
+        weights: {
+          contour: 0.9,
+          repetition: 0.35,
+          rhythmicVariation: 0.75,
+          inversion: 0.65,
+          rest: 0.1,
+          closure: 0.35,
+        },
+        limits: {
+          density: 'dense',
+          motifEventCount: 5,
+          restRatioTarget: 0,
+          maximumSyncopatedEvents: 5,
+          closureStrength: 'open',
+          allowedModes: ['dorian', 'minor-pentatonic'],
+          tempoBpm: 92,
+        },
+      },
+      OPEN_ENDED: {
+        id: 'OPEN_ENDED',
+        weights: {
+          contour: 0.7,
+          repetition: 0.55,
+          rhythmicVariation: 0.6,
+          inversion: 0.3,
+          rest: 0.45,
+          closure: 0.1,
+        },
+        limits: {
+          density: 'balanced',
+          motifEventCount: 3,
+          restRatioTarget: 0.15,
+          maximumSyncopatedEvents: 3,
+          closureStrength: 'open',
+          allowedModes: ['dorian', 'mixolydian'],
+          tempoBpm: 76,
+        },
+      },
+      RESOLVED: {
+        id: 'RESOLVED',
+        weights: {
+          contour: 0.55,
+          repetition: 0.7,
+          rhythmicVariation: 0.4,
+          inversion: 0.1,
+          rest: 0.25,
+          closure: 1,
+        },
+        limits: {
+          density: 'balanced',
+          motifEventCount: 3,
+          restRatioTarget: 0.05,
+          maximumSyncopatedEvents: 2,
+          closureStrength: 'strong',
+          allowedModes: ['major-pentatonic', 'minor-pentatonic'],
+          tempoBpm: 78,
+        },
+      },
     })
   })
 
@@ -172,6 +300,11 @@ describe('Work 03 versioned grammar contract', () => {
       value.constraints = { maximumSyncopatedEvents: 3 }
     }],
     ['event explosion', (value: any) => { value.constraints = { maximumEvents: 21 } }],
+    ['irreconcilable profile event cap', (value: any) => {
+      value.profile = 'PULSING'
+      value.constraints = { maximumEvents: 19 }
+    }],
+    ['unknown request field', (value: any) => { value.timestamp = 1234 }],
     ['unknown constraint', (value: any) => { value.constraints = { mood: 'sad' } }],
   ])('rejects %s instead of widening or repairing the request', (_, mutate) => {
     const invalid: any = structuredClone(request())
