@@ -46,12 +46,16 @@ export function createInitialMetrics(options: {
     inputLengthScaling: unavailable(
       'Work 01 fixes valid generator input at exactly twelve final decisions.',
     ),
-    runtime: {
-      status: 'measured',
-      confidence: 'low',
-      value: options.runtime,
-      rationale: 'Local wall-clock samples are environment evidence, not a stable score.',
-    },
+    runtime:
+      options.runtime.firstRunMilliseconds === null ||
+      options.runtime.repeatRunMilliseconds === null
+        ? unavailable('Both completed primary and repeat calls are required for runtime evidence.')
+        : {
+            status: 'measured',
+            confidence: 'low',
+            value: options.runtime,
+            rationale: 'Local wall-clock samples are environment evidence, not a stable score.',
+          },
     outputSizeScaling: scaling,
   }
   return {

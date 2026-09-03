@@ -79,8 +79,8 @@ export interface FormMetrics {
 }
 
 export interface RuntimeObservation {
-  firstRunMilliseconds: number
-  repeatRunMilliseconds: number
+  firstRunMilliseconds: number | null
+  repeatRunMilliseconds: number | null
   perturbationRunMilliseconds: number | null
 }
 
@@ -108,6 +108,7 @@ export interface BenchmarkMetrics {
 
 export type ValidationScope =
   | 'generator'
+  | 'adapter-contract'
   | 'schema'
   | 'finite-numbers'
   | 'duration'
@@ -120,6 +121,8 @@ export interface ValidationCheck {
   id: string
   scope: ValidationScope
   passed: boolean
+  /** False means the cap/safety precondition prevented evaluating this check. */
+  available?: boolean
   message: string
 }
 
@@ -165,6 +168,14 @@ export interface NormalizedMelody {
   events: readonly NormalizedMelodyEvent[]
 }
 
+export interface BenchmarkExpectations {
+  presentedOrders: readonly number[]
+  selectionDirections: readonly ('left' | 'right')[]
+  contourPositions?: readonly number[]
+  phraseBoundaryBeats?: readonly number[]
+  expectedRestRatio?: number
+}
+
 export interface BenchmarkAdapterContext<
   TSession,
   TOutput,
@@ -184,14 +195,17 @@ export interface BenchmarkProfile<TSession, TOutput> {
     output: TOutput,
     context: BenchmarkAdapterContext<TSession, TOutput, this>,
   ): NormalizedMelody
+  /** Native validator checks must use scope `adapter-contract`. */
   validateOutput(
     output: TOutput,
     context: BenchmarkAdapterContext<TSession, TOutput, this>,
   ): readonly ValidationCheck[]
+  /** Native schedule validator checks must use scope `schedule`. */
   validateSchedule?(
     output: TOutput,
     context: BenchmarkAdapterContext<TSession, TOutput, this>,
   ): ValidationCheck
+  expectations?(session: TSession): BenchmarkExpectations
   perturbSession?(session: TSession): TSession
 }
 
@@ -215,6 +229,7 @@ export interface EvaluateGeneratorOptions<
   generatorId: string
   seed: number
   profile: TProfile
+  timeoutMilliseconds?: number
 }
 
 export interface GeneratorEvaluation<TOutput> {

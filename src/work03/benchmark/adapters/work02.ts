@@ -14,6 +14,11 @@ import type {
   NormalizedMelodyEvent,
   ValidationCheck,
 } from '../types'
+import {
+  MAX_BENCHMARK_EVENTS,
+  MAX_DECLARED_DURATIONS,
+  MAX_PROVENANCE_VALUES_PER_EVENT,
+} from '../validation'
 
 export const WORK02_BASELINE_GENERATOR_ID = 'work02-melody-generator-v0' as const
 
@@ -34,9 +39,21 @@ const number = (value: unknown, path: string): number => {
   return value
 }
 
-const numberArray = (value: unknown, path: string): readonly number[] => {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'number')) {
-    throw new TypeError(`${path} must be a number array.`)
+const denseArray = (value: unknown[], maximumLength: number): boolean =>
+  value.length <= maximumLength &&
+  Array.from({ length: value.length }, (_, index) => index in value).every(Boolean)
+
+const numberArray = (
+  value: unknown,
+  path: string,
+  maximumLength: number,
+): readonly number[] => {
+  if (
+    !Array.isArray(value) ||
+    !denseArray(value, maximumLength) ||
+    value.some((item) => typeof item !== 'number')
+  ) {
+    throw new TypeError(`${path} must be a bounded dense number array.`)
   }
   return value as number[]
 }
@@ -47,6 +64,7 @@ const directionArray = (
 ): readonly ('left' | 'right')[] => {
   if (
     !Array.isArray(value) ||
+    !denseArray(value, MAX_PROVENANCE_VALUES_PER_EVENT) ||
     value.some((item) => item !== 'left' && item !== 'right')
   ) {
     throw new TypeError(`${path} must be a left/right array.`)
@@ -57,12 +75,20 @@ const directionArray = (
 const inspectSource = (value: unknown, path: string): NormalizedEventSource => {
   const source = object(value, path)
   return {
-    presentedOrders: numberArray(source.presentedOrders, `${path}.presentedOrders`),
+    presentedOrders: numberArray(
+      source.presentedOrders,
+      `${path}.presentedOrders`,
+      MAX_PROVENANCE_VALUES_PER_EVENT,
+    ),
     selectionDirections: directionArray(
       source.selectionDirections,
       `${path}.selectionDirections`,
     ),
-    contourPositions: numberArray(source.contourPositions, `${path}.contourPositions`),
+    contourPositions: numberArray(
+      source.contourPositions,
+      `${path}.contourPositions`,
+      MAX_PROVENANCE_VALUES_PER_EVENT,
+    ),
   }
 }
 
@@ -73,31 +99,38 @@ const inspectSource = (value: unknown, path: string): NormalizedEventSource => {
 export function inspectWork02Output(value: unknown): NormalizedMelody {
   const output = object(value, 'output')
   const grammar = object(output.grammar, 'output.grammar')
-  if (!Array.isArray(output.events)) {
-    throw new TypeError('output.events must be an array.')
+  if (
+    !Array.isArray(output.events) ||
+    output.events.length === 0 ||
+    !denseArray(output.events, MAX_BENCHMARK_EVENTS)
+  ) {
+    throw new TypeError('output.events must be a bounded dense array.')
   }
-  const events: NormalizedMelodyEvent[] = output.events.map((rawEvent, index) => {
-    const event = object(rawEvent, `output.events[${index}]`)
-    const source = inspectSource(event.source, `output.events[${index}].source`)
-    const base = {
-      eventIndex: number(event.eventIndex, `output.events[${index}].eventIndex`),
-      startBeat: number(event.startBeat, `output.events[${index}].startBeat`),
-      durationBeats: number(
-        event.durationBeats,
-        `output.events[${index}].durationBeats`,
-      ),
-      source,
-    }
-    if (event.kind === 'rest') return { kind: 'rest' as const, ...base }
-    if (event.kind !== 'note') {
-      throw new TypeError(`output.events[${index}].kind is unsupported.`)
-    }
-    return {
-      kind: 'note' as const,
-      ...base,
-      midiNote: number(event.midiNote, `output.events[${index}].midiNote`),
-    }
-  })
+  const events: NormalizedMelodyEvent[] = Array.from(
+    output.events,
+    (rawEvent, index) => {
+      const event = object(rawEvent, `output.events[${index}]`)
+      const source = inspectSource(event.source, `output.events[${index}].source`)
+      const base = {
+        eventIndex: number(event.eventIndex, `output.events[${index}].eventIndex`),
+        startBeat: number(event.startBeat, `output.events[${index}].startBeat`),
+        durationBeats: number(
+          event.durationBeats,
+          `output.events[${index}].durationBeats`,
+        ),
+        source,
+      }
+      if (event.kind === 'rest') return { kind: 'rest' as const, ...base }
+      if (event.kind !== 'note') {
+        throw new TypeError(`output.events[${index}].kind is unsupported.`)
+      }
+      return {
+        kind: 'note' as const,
+        ...base,
+        midiNote: number(event.midiNote, `output.events[${index}].midiNote`),
+      }
+    },
+  )
 
   return {
     totalBeats: number(output.totalBeats, 'output.totalBeats'),
@@ -112,6 +145,7 @@ export function inspectWork02Output(value: unknown): NormalizedMelody {
     allowedDurationsBeats: numberArray(
       grammar.allowedDurationsBeats,
       'output.grammar.allowedDurationsBeats',
+      MAX_DECLARED_DURATIONS,
     ),
     events,
   }
@@ -122,14 +156,14 @@ const validateNativeOutput = (output: unknown): readonly ValidationCheck[] => {
     validateMelodyOutput(output)
     return [{
       id: 'WORK02_MELODY_CONTRACT',
-      scope: 'schema',
+      scope: 'adapter-contract',
       passed: true,
       message: 'Output passes the exact Work 02 melody contract.',
     }]
   } catch (error) {
     return [{
       id: 'WORK02_MELODY_CONTRACT',
-      scope: 'schema',
+      scope: 'adapter-contract',
       passed: false,
       message: error instanceof Error ? error.message : String(error),
     }]
@@ -180,6 +214,23 @@ export function createWork02BenchmarkProfile(
     inspectOutput: (output) => inspectWork02Output(output),
     validateOutput: (output) => validateNativeOutput(output),
     validateSchedule: (output) => validateNativeSchedule(output),
+    expectations: (session) => {
+      const interpretation = interpretFlow(adaptSessionExport(session), method)
+      return {
+        presentedOrders: interpretation.items.map((item) => item.presentedOrder),
+        selectionDirections: interpretation.items.map(
+          (item) => item.selectionDirection,
+        ),
+        contourPositions: interpretation.registerContourCandidates.map(
+          (candidate) => candidate.normalizedPosition,
+        ),
+        // Work 02 emits a fixed twelve-beat form; thirds are an adapter-owned
+        // structural probe, not a claim that the generator declares phrases.
+        phraseBoundaryBeats: [4, 8],
+        expectedRestRatio:
+          interpretation.directionSummary.leftCount / (2 * interpretation.inputItemCount),
+      }
+    },
     perturbSession: perturbWork02Session,
   }
 }
